@@ -1,0 +1,13 @@
+# Filesystem artifacts
+.directory
+sdkconfig.old
+
+# cmake artifacts
+CMakeCache.txt
+CMakeFiles/
+build/
+
+# Imported libraries
+components/CppPotpourri
+components/ManuvrDrivers
+components/ManuvrPlatform
