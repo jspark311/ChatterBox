@@ -65,14 +65,14 @@ UARTOpts uart2_opts {
   .padding       = 0
 };
 
-ManuvrLinkOpts link_opts(
+M2MLinkOpts link_opts(
   100,   // ACK timeout is 100ms.
   2000,  // Send a KA every 2s.
   2048,  // MTU for this link is 2 kibi.
   TCode::CBOR,   // Payloads should be CBOR encoded.
   // This side of the link will send a KA while IDLE, and
   //   allows remote log write.
-  (MANUVRLINK_FLAG_SEND_KA | MANUVRLINK_FLAG_ALLOW_LOG_WRITE)
+  (M2MLINK_FLAG_SEND_KA | M2MLINK_FLAG_ALLOW_LOG_WRITE)
 );
 
 
@@ -86,7 +86,7 @@ I2CAdapter i2c0(&i2c0_opts);
 UARTAdapter movi_uart(2, UART2_RX_PIN, UART2_TX_PIN, 255, 255, 256, 256);
 MOVI movi(&movi_uart);
 
-ManuvrLink* mlink_local = nullptr;
+M2MLink* mlink_local = nullptr;
 
 /* Profiling data */
 StopWatch stopwatch_main_loop_time;
@@ -114,13 +114,13 @@ int8_t report_fault_condition(int8_t fault) {
 /*******************************************************************************
 * Link callbacks
 *******************************************************************************/
-void link_callback_state(ManuvrLink* cb_link) {
+void link_callback_state(M2MLink* cb_link) {
   StringBuilder log;
-  c3p_log(LOG_LEV_NOTICE, TAG, "Link (0x%x) entered state %s\n", cb_link->linkTag(), ManuvrLink::sessionStateStr(cb_link->getState()));
+  c3p_log(LOG_LEV_NOTICE, TAG, "Link (0x%x) entered state %s\n", cb_link->linkTag(), M2MLink::sessionStateStr(cb_link->getState()));
 }
 
 
-void link_callback_message(uint32_t tag, ManuvrMsg* msg) {
+void link_callback_message(uint32_t tag, M2MMsg* msg) {
   StringBuilder log;
   KeyValuePair* kvps_rxd = nullptr;
   bool dump_msg_debug = true;

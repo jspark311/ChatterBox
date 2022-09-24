@@ -11,7 +11,7 @@
 #include <StopWatch.h>
 #include <uuid.h>
 #include <SensorFilter.h>
-#include <ManuvrLink/ManuvrLink.h>
+#include <M2MLink/M2MLink.h>
 #include <I2CAdapter.h>
 #include "UARTAdapter.h"
 
@@ -64,7 +64,7 @@ extern I2CAdapter i2c0;
 /*******************************************************************************
 * Externs to software singletons
 *******************************************************************************/
-extern ManuvrLink* mlink_local;
+extern M2MLink* mlink_local;
 
 
 /*******************************************************************************
