@@ -20,8 +20,8 @@
 /* ManuvrDrivers */
 #include <ManuvrDrivers.h>
 
-#ifndef __HEAT_PUMP_H__
-#define __HEAT_PUMP_H__
+#ifndef __CHATTERBOX_H__
+#define __CHATTERBOX_H__
 
 #define TEST_PROG_VERSION           "1.0"
 
@@ -31,9 +31,13 @@
 *******************************************************************************/
 /* Platform pins */
 #define UART2_RX_PIN       16   // INPUT_PULLUP
-#define UART2_TX_PIN       17   // INPUT_PULLUP
+#define UART2_TX_PIN       17   // OUTPUT
 #define SDA0_PIN           25   // Touch and power board service.
 #define SCL0_PIN           26   // Touch and power board service.
+
+//#define LED_R_PIN          26   // Touch and power board service.
+//#define LED_G_PIN          26   // Touch and power board service.
+//#define LED_B_PIN          26   // Touch and power board service.
 
 
 /*******************************************************************************
@@ -44,19 +48,6 @@
 /*******************************************************************************
 * Types
 *******************************************************************************/
-enum class SensorID : uint8_t {
-  BARO                 =  0,  //
-  TEMP_MOSFET_BANK     =  1,  //
-  TEMP_XCHANGER0_IN    =  2,  //
-  TEMP_XCHANGER0_OUT   =  3,  //
-  TEMP_XCHANGER1_IN    =  4,  //
-  TEMP_XCHANGER1_OUT   =  5,  //
-  FAN_SPEED_0          =  6,  //
-  FAN_SPEED_1          =  7,  //
-  FAN_SPEED_2          =  8,  //
-  PUMP_SPEED_0         =  9,  //
-  PUMP_SPEED_1         = 10,  //
-};
 
 
 /*******************************************************************************

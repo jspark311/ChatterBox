@@ -36,7 +36,7 @@ extern "C" {
 /*******************************************************************************
 * TODO: Pending mitosis into a header file....
 *******************************************************************************/
-IdentityUUID ident_uuid("Chatterbox", "2f0891e1-ba39-4779-9e7d-17c771ced179");
+IdentityUUID ident_uuid("Chatterbox", (char*) "2f0891e1-ba39-4779-9e7d-17c771ced179");
 
 
 
@@ -84,6 +84,8 @@ ESP32StdIO console_uart;
 I2CAdapter i2c0(&i2c0_opts);
 
 UARTAdapter movi_uart(2, UART2_RX_PIN, UART2_TX_PIN, 255, 255, 256, 256);
+MOVI movi(&movi_uart);
+
 ManuvrLink* mlink_local = nullptr;
 
 /* Profiling data */
@@ -233,6 +235,86 @@ int callback_i2c_tools(StringBuilder* text_return, StringBuilder* args) {
   return ret;
 }
 
+int console_callback_movi(StringBuilder* text_return, StringBuilder* args) {
+  return movi.console_handler(text_return, args);
+}
+
+
+/**
+* @page console-handlers
+* @section uart-tools UART tools
+*
+* This is the console handler for debugging the operation of the UART hardware.
+*
+* @subsection arguments Arguments
+* Argument | Purpose | Required
+* -------- | ------- | --------
+* 1        | UartID  | No (lists UARTs if not provided)
+* 2        | Action  | No (prints debugging information for specified UART if not provided)
+* 3        | Action-Specific | No
+*
+* @subsection cmd-actions Actions
+* Action   | Description | Additional arguments
+* -------- | ----------- | --------------------
+* `init`   | Enable the UART, claim the pins, initialize associated memory, and begin operation. | None
+* `deinit` | Disable the UART, release the pins, and wipe associated memory. | None
+* `poll`   | Manually invoke the UART driver's `poll()` function. | None
+* `read`   | Reads all available data from the UART and renders it to the console. | None
+*/
+int callback_uart_tools(StringBuilder* text_return, StringBuilder* args) {
+  int8_t ret = 0;
+  bool print_uarts = true;
+  if (0 < args->count()) {
+    int uart_num = args->position_as_int(0);
+    //UARTAdapter* uart = &console_uart;
+    //UARTOpts* default_opts = (UARTOpts*) &console_uart_opts;
+    //switch (uart_num) {
+    //  case 0:
+    //  case 2:
+    //    print_uarts = false;
+    //    if (1 < args->count()) {
+    //      char* cmd = args->position_trimmed(1);
+    //      if (0 == StringBuilder::strcasecmp(cmd, "init")) {
+    //        //UARTOpts* opts = uart->uartOpts();
+    //        text_return->concatf("UART%u.init() returns %d.\n", uart_num, uart->init(default_opts));
+    //      }
+    //      else if (0 == StringBuilder::strcasecmp(cmd, "deinit")) {
+    //        text_return->concatf("UART%u.deinit() returns %d.\n", uart_num, uart->deinit());
+    //      }
+    //      //else if (0 == StringBuilder::strcasecmp(cmd, "reset")) {
+    //      //  text_return->concatf("UART%u.reset() returns %d.\n", uart_num, uart->reset());
+    //      //}
+    //      //else if (0 == StringBuilder::strcasecmp(cmd, "bitrate")) {
+    //      //}
+    //      else if (0 == StringBuilder::strcasecmp(cmd, "poll")) {
+    //        text_return->concatf("UART%u.poll() returns %d.\n", uart_num, uart->poll());
+    //      }
+    //      else if (0 == StringBuilder::strcasecmp(cmd, "read")) {
+    //        StringBuilder rx;
+    //        uart->read(&rx);
+    //        text_return->concatf("UART%u.read() returns %u bytes:\n", uart_num, rx.length());
+    //        rx.printDebug(text_return);
+    //      }
+    //      else {
+    //        ret = -1;
+    //      }
+    //    }
+    //    else {
+    //      uart->printDebug(text_return);
+    //    }
+    //    break;
+    //  default:
+    //    text_return->concat("Unknown UART.\n");
+    //    break;
+    //}
+  }
+  if (print_uarts) {
+    text_return->concat("Supported UARTs:\n\t0: CONSOLE\n\t2: MOVI UART\n");
+  }
+  return ret;
+}
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -326,6 +408,7 @@ void manuvr_task(void* pvParameter) {
     if (0 < movi_uart.poll()) {
       should_sleep = false;
     }
+    movi.poll();
 
     if (mlink_local) {
       StringBuilder link_log;
@@ -364,25 +447,25 @@ void app_main() {
   console.localEcho(true);
   console.printHelpOnFail(true);
 
-  console.defineCommand("help",        '?',  ParsingConsole::tcodes_str_1, "Prints help to console.", "[<specific command>]", 0, callback_help);
-  console.defineCommand("console",     '\0', ParsingConsole::tcodes_str_3, "Console conf.", "[echo|prompt|force|rxterm|txterm]", 0, callback_console_tools);
+  console.defineCommand("help",        '?',  "Prints help to console.", "[<specific command>]", 0, callback_help);
+  console.defineCommand("console",     '\0', "Console conf.", "[echo|prompt|force|rxterm|txterm]", 0, callback_console_tools);
   platform.configureConsole(&console);
-  console.defineCommand("link",        'l',  ParsingConsole::tcodes_str_4, "Linked device tools.", "", 0, callback_link_tools);
-  console.defineCommand("i2c",         '\0', ParsingConsole::tcodes_str_4, "I2C tools", "i2c <bus> <action> [addr]", 1, callback_i2c_tools);
-  console.defineCommand("str",         '\0', ParsingConsole::tcodes_str_4, "Storage tools", "", 0, console_callback_esp_storage);
+  console.defineCommand("link",        'l',  "Linked device tools.", "", 0, callback_link_tools);
+  console.defineCommand("i2c",         '\0', "I2C tools", "i2c <bus> <action> [addr]", 1, callback_i2c_tools);
+  console.defineCommand("str",         '\0', "Storage tools", "", 0, console_callback_esp_storage);
+  console.defineCommand("movi",        'm',  "MOVI tools", "", 0, console_callback_movi);
+  console.defineCommand("uart",        'u',  "UART tools", "<adapter> [init|deinit|reset|poll]", 0, callback_uart_tools);
 
   console.init();
 
   StringBuilder ptc("Chatterbox ");
   ptc.concat(TEST_PROG_VERSION);
   ptc.concat("\t Build date " __DATE__ " " __TIME__ "\n");
-  console.printToLog(&ptc);
 
   i2c0.init();
 
-  if (0 == movi_uart.init(&uart2_opts)) {
-    // TODO: MOVI object assignment.
-  }
+  int ret = movi_uart.init(&uart2_opts);
+  ptc.concatf("MOVI UART init() returns %d\n", ret);
 
   // Assign i2c0 to devices attached to it.
 
@@ -390,20 +473,22 @@ void app_main() {
 
   // Enable interrupts for pins.
 
-  // Setup Wifi peripheral in station mode.
-  ESP_ERROR_CHECK(esp_netif_init());
-  ESP_ERROR_CHECK(esp_event_loop_create_default());
-  esp_netif_t* sta_netif = esp_netif_create_default_wifi_sta();
-  assert(sta_netif);
-  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-  ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-  ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-  ESP_ERROR_CHECK(esp_wifi_start());
-
   // Spawn worker threads, note the time, and terminate thread.
   xTaskCreate(manuvr_task, "_manuvr", 32768, NULL, (tskIDLE_PRIORITY), NULL);
+
+  // Setup Wifi peripheral in station mode.
+  //ESP_ERROR_CHECK(esp_netif_init());
+  //ESP_ERROR_CHECK(esp_event_loop_create_default());
+  //esp_netif_t* sta_netif = esp_netif_create_default_wifi_sta();
+  //assert(sta_netif);
+  //wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+  //ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+  //ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+  //ESP_ERROR_CHECK(esp_wifi_start());
+  console.printToLog(&ptc);
+
   config_time = millis();
-  wifi_scan();
+  //wifi_scan();
 }
 
 #ifdef __cplusplus
