@@ -13,12 +13,12 @@
 #include <ParsingConsole.h>
 #include <StopWatch.h>
 #include <uuid.h>
-#include <SensorFilter.h>
-#include <M2MLink/M2MLink.h>
-#include <UARTAdapter.h>
-#include <cbor-cpp/cbor.h>
 #include <Identity/Identity.h>
 #include <Identity/IdentityUUID.h>
+#include <SensorFilter.h>
+#include <UARTAdapter.h>
+#include <M2MLink/M2MLink.h>
+#include <cbor-cpp/cbor.h>
 
 /* ManuvrDrivers */
 #include <ManuvrDrivers.h>
@@ -67,9 +67,9 @@ extern MOVI movi;   // The voice box.
 
 /*******************************************************************************
 * Externs to software singletons
-* TODO: If you replicate this any further, you deserve the extra work you make
-*   for yourself. This is a terrible pattern for so many reasons...
 *******************************************************************************/
+// TODO: If you replicate this any further, you deserve the extra work you make
+//   for yourself. This is a terrible pattern for so many reasons...
 extern M2MLink* mlink_local;
 
 
