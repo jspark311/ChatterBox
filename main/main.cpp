@@ -1,12 +1,7 @@
 #include <math.h>
 
-/* ManuvrPlatform */
-#include <ESP32.h>
-
 /* Local includes */
 #include "Chatterbox.h"
-#include "Identity/IdentityUUID.h"
-#include "Identity/Identity.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,16 +38,6 @@ IdentityUUID ident_uuid("Chatterbox", (char*) "2f0891e1-ba39-4779-9e7d-17c771ced
 /*******************************************************************************
 * Globals
 *******************************************************************************/
-
-// This bus handles UI and the baro sensor.
-const I2CAdapterOptions i2c0_opts(
-  0,   // Device number
-  SDA0_PIN,  // (sda)
-  SCL0_PIN,  // (scl)
-  0,   // No pullups.
-  200000
-);
-
 UARTOpts uart2_opts {
   .bitrate       = 9600,
   .start_bits    = 0,
@@ -80,8 +65,6 @@ static const char* TAG         = "main-cpp";
 const char* console_prompt_str = "Chatterbox # ";
 ParsingConsole console(128);
 ESP32StdIO console_uart;
-
-I2CAdapter i2c0(&i2c0_opts);
 
 UARTAdapter movi_uart(2, UART2_RX_PIN, UART2_TX_PIN, 255, 255, 256, 256);
 MOVI movi(&movi_uart);
@@ -184,15 +167,26 @@ void link_callback_message(uint32_t tag, M2MMsg* msg) {
 * Console callbacks
 *******************************************************************************/
 
-int callback_help(StringBuilder* text_return, StringBuilder* args) {
-  return console.console_handler_help(text_return, args);
+/* Direct console shunt */
+int callback_help(StringBuilder* txt_ret, StringBuilder* args) {
+  return console.console_handler_help(txt_ret, args);
 }
 
-int callback_console_tools(StringBuilder* text_return, StringBuilder* args) {
-  return console.console_handler_conf(text_return, args);
+/* Direct console shunt */
+int callback_console_tools(StringBuilder* txt_ret, StringBuilder* args) {
+  return console.console_handler_conf(txt_ret, args);
+}
+
+/* Direct console shunt */
+int console_callback_movi(StringBuilder* txt_ret, StringBuilder* args) {
+  return movi.console_handler(txt_ret, args);
 }
 
 
+/*
+* TODO: Locally pre-empted console handler to facilitate `ping`, which is no
+*   longer required. Reduce into a shunt.
+*/
 int callback_link_tools(StringBuilder* text_return, StringBuilder* args) {
   int ret = -1;
   if (mlink_local) {
@@ -217,26 +211,6 @@ int callback_link_tools(StringBuilder* text_return, StringBuilder* args) {
   }
 
   return ret;
-}
-
-
-int callback_i2c_tools(StringBuilder* text_return, StringBuilder* args) {
-  int ret = -1;
-  if (0 < args->count()) {
-    int bus_id = args->position_as_int(0);
-    args->drop_position(0);
-    switch (bus_id) {
-      case 0:   ret = i2c0.console_handler(text_return, args);  break;
-      default:
-        text_return->concatf("Unsupported bus: %d\n", bus_id);
-        break;
-    }
-  }
-  return ret;
-}
-
-int console_callback_movi(StringBuilder* text_return, StringBuilder* args) {
-  return movi.console_handler(text_return, args);
 }
 
 
@@ -390,7 +364,7 @@ static void wifi_scan() {
 
 
 /*******************************************************************************
-* Main function and threads                                                    *
+* Threads
 *******************************************************************************/
 
 /**
@@ -425,9 +399,11 @@ void manuvr_task(void* pvParameter) {
 
 
 /*******************************************************************************
-* Setup function
+* Setup function. This will be the entry-point for our code from ESP-IDF's
+*   boilerplate. Since we don't trust the sdkconfig to have specified a stack
+*   of appropriate depth, we do our setup, launch any threads we want, and the
+*   let this thread die.
 *******************************************************************************/
-
 void app_main() {
   /*
   * The platform object is created on the stack, but takes no action upon
@@ -436,6 +412,13 @@ void app_main() {
   */
   platform_init();
   boot_time = millis();
+
+  // The unit has a bi-color LED with a common anode.
+  // Start with the LED off.
+  pinMode(LED_R_PIN,  GPIOMode::ANALOG_OUT);
+  pinMode(LED_G_PIN,  GPIOMode::ANALOG_OUT);
+  analogWrite(LED_G_PIN, 1.0);
+  analogWrite(LED_R_PIN, 1.0);
 
   /* Start the console UART and attach it to the console. */
   console_uart.readCallback(&console);    // Attach the UART to console...
@@ -451,7 +434,6 @@ void app_main() {
   console.defineCommand("console",     '\0', "Console conf.", "[echo|prompt|force|rxterm|txterm]", 0, callback_console_tools);
   platform.configureConsole(&console);
   console.defineCommand("link",        'l',  "Linked device tools.", "", 0, callback_link_tools);
-  console.defineCommand("i2c",         '\0', "I2C tools", "i2c <bus> <action> [addr]", 1, callback_i2c_tools);
   console.defineCommand("str",         '\0', "Storage tools", "", 0, console_callback_esp_storage);
   console.defineCommand("movi",        'm',  "MOVI tools", "", 0, console_callback_movi);
   console.defineCommand("uart",        'u',  "UART tools", "<adapter> [init|deinit|reset|poll]", 0, callback_uart_tools);
@@ -462,20 +444,21 @@ void app_main() {
   ptc.concat(TEST_PROG_VERSION);
   ptc.concat("\t Build date " __DATE__ " " __TIME__ "\n");
 
-  i2c0.init();
-
   int ret = movi_uart.init(&uart2_opts);
   ptc.concatf("MOVI UART init() returns %d\n", ret);
+  // The MOVI driver doesn't require a call to an init() function. It has an
+  //   internal finite state machine that is smart enough to do things for
+  //   itself, if given a working UART reference and regular polling.
+  // It does, however, require us to setup callbacks to get most out of it.
+  // TODO: That^^
 
-  // Assign i2c0 to devices attached to it.
+  // Write our boot log to the UART.
+  console.printToLog(&ptc);
 
-  // Callback setup for various drivers...
-
-  // Enable interrupts for pins.
-
-  // Spawn worker threads, note the time, and terminate thread.
+  // Spawn worker thread for Manuvr's use.
   xTaskCreate(manuvr_task, "_manuvr", 32768, NULL, (tskIDLE_PRIORITY), NULL);
 
+  // TODO: Spawn worker thread for wifi use.
   // Setup Wifi peripheral in station mode.
   //ESP_ERROR_CHECK(esp_netif_init());
   //ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -485,10 +468,10 @@ void app_main() {
   //ESP_ERROR_CHECK(esp_wifi_init(&cfg));
   //ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
   //ESP_ERROR_CHECK(esp_wifi_start());
-  console.printToLog(&ptc);
-
-  config_time = millis();
   //wifi_scan();
+
+  // Note the time it took to do setup, and allow THIS thread to gracefully terminate.
+  config_time = millis();
 }
 
 #ifdef __cplusplus

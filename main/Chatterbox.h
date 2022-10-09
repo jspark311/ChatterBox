@@ -3,6 +3,9 @@
 #include <stdint.h>
 #include <math.h>
 
+/* ManuvrPlatform */
+#include <ESP32.h>
+
 /* CppPotpourri */
 #include <CppPotpourri.h>
 #include <AbstractPlatform.h>
@@ -12,10 +15,10 @@
 #include <uuid.h>
 #include <SensorFilter.h>
 #include <M2MLink/M2MLink.h>
-#include <I2CAdapter.h>
-#include "UARTAdapter.h"
-
+#include <UARTAdapter.h>
 #include <cbor-cpp/cbor.h>
+#include <Identity/Identity.h>
+#include <Identity/IdentityUUID.h>
 
 /* ManuvrDrivers */
 #include <ManuvrDrivers.h>
@@ -23,6 +26,11 @@
 #ifndef __CHATTERBOX_H__
 #define __CHATTERBOX_H__
 
+// TODO: I _HaTe* that I have replicated this awful pattern of hard-coded
+//   program versions (which are never updated) into so many projects. Finally
+//   decide on a means of doing this that more-closely resembles the awesome
+//   arrangement that I have at LTi for automatically binding the firmware
+//   version to source-control.
 #define TEST_PROG_VERSION           "1.0"
 
 
@@ -32,12 +40,8 @@
 /* Platform pins */
 #define UART2_RX_PIN       16   // INPUT_PULLUP
 #define UART2_TX_PIN       17   // OUTPUT
-#define SDA0_PIN           25   // Touch and power board service.
-#define SCL0_PIN           26   // Touch and power board service.
-
-//#define LED_R_PIN          26   // Touch and power board service.
-//#define LED_G_PIN          26   // Touch and power board service.
-//#define LED_B_PIN          26   // Touch and power board service.
+#define LED_R_PIN          25   // OUTPUT Active low
+#define LED_G_PIN          26   // OUTPUT Active low
 
 
 /*******************************************************************************
@@ -58,11 +62,13 @@
 /*******************************************************************************
 * Externs to hardware resources
 *******************************************************************************/
-extern I2CAdapter i2c0;
+extern MOVI movi;   // The voice box.
 
 
 /*******************************************************************************
 * Externs to software singletons
+* TODO: If you replicate this any further, you deserve the extra work you make
+*   for yourself. This is a terrible pattern for so many reasons...
 *******************************************************************************/
 extern M2MLink* mlink_local;
 
