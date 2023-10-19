@@ -118,7 +118,7 @@ void link_callback_message(uint32_t tag, M2MMsg* msg) {
         //   handle the response.
         if (ping_nonce) {
           if (ping_nonce == msg->uniqueId()) {
-            log.concatf("\tPing returned in %ums.\n", wrap_accounted_delta((uint32_t) micros(), ping_req_time));
+            log.concatf("\tPing returned in %ums.\n", millis_since(ping_req_time));
             ping_req_time = 0;
             ping_nonce    = 0;
           }

@@ -11,12 +11,12 @@
 #include <AbstractPlatform.h>
 #include <StringBuilder.h>
 #include <ParsingConsole.h>
-#include <StopWatch.h>
+#include <TimerTools.h>
 #include <uuid.h>
 #include <Identity/Identity.h>
 #include <Identity/IdentityUUID.h>
 #include <SensorFilter.h>
-#include <UARTAdapter.h>
+#include <BusQueue/UARTAdapter.h>
 #include <M2MLink/M2MLink.h>
 #include <cbor-cpp/cbor.h>
 
