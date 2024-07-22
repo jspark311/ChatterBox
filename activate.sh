@@ -1,5 +1,5 @@
 #!/bin/bash
-source /home/ian/.espressif/python_env/idf4.2_py3.8_env/bin/activate
-export PATH=$PATH:/opt/esp/tools/
+#esp-idf v5.3
+source /home/ian/esp-idf/export.sh
 idf.py build size
 idf.py flash monitor

@@ -16,6 +16,7 @@ extern "C" {
 #include "lwip/dns.h"
 #include "lwip/netdb.h"
 #include "lwip/sys.h"
+#include "esp_wifi.h"
 
 #include "esp_http_client.h"
 #include "mqtt_client.h"
@@ -66,7 +67,7 @@ const char* console_prompt_str = "Chatterbox # ";
 ParsingConsole console(128);
 ESP32StdIO console_uart;
 
-UARTAdapter movi_uart(2, UART2_RX_PIN, UART2_TX_PIN, 255, 255, 256, 256);
+PlatformUART movi_uart(2, UART2_RX_PIN, UART2_TX_PIN, 255, 255, 256, 256);
 MOVI movi(&movi_uart);
 
 M2MLink* mlink_local = nullptr;
@@ -99,7 +100,7 @@ int8_t report_fault_condition(int8_t fault) {
 *******************************************************************************/
 void link_callback_state(M2MLink* cb_link) {
   StringBuilder log;
-  c3p_log(LOG_LEV_NOTICE, TAG, "Link (0x%x) entered state %s\n", cb_link->linkTag(), M2MLink::sessionStateStr(cb_link->getState()));
+  c3p_log(LOG_LEV_NOTICE, TAG, "Link (0x%x) entered state %s\n", cb_link->linkTag(), M2MLink::sessionStateStr(cb_link->currentState()));
 }
 
 
@@ -379,7 +380,7 @@ void manuvr_task(void* pvParameter) {
     if (0 < console_uart.poll()) {
       should_sleep = false;
     }
-    if (0 < movi_uart.poll()) {
+    if (PollResult::ACTION == movi_uart.poll()) {
       should_sleep = false;
     }
     movi.poll();
@@ -422,9 +423,8 @@ void app_main() {
 
   /* Start the console UART and attach it to the console. */
   console_uart.readCallback(&console);    // Attach the UART to console...
-  console.setOutputTarget(&console_uart); // ...and console to UART.
-  console.setTXTerminator(LineTerm::CRLF); // Best setting for "idf.py monitor"
-  console.setRXTerminator(LineTerm::LF);   // Best setting for "idf.py monitor"
+  console.setEfferant(&console_uart);     // ...and console to UART.
+  console.setRXTerminator(LineTerm::LF);  // Best setting for "idf.py monitor"
   console.setPromptString(console_prompt_str);
   console.emitPrompt(true);
   console.localEcho(true);
@@ -434,7 +434,7 @@ void app_main() {
   console.defineCommand("console",     '\0', "Console conf.", "[echo|prompt|force|rxterm|txterm]", 0, callback_console_tools);
   platform.configureConsole(&console);
   console.defineCommand("link",        'l',  "Linked device tools.", "", 0, callback_link_tools);
-  console.defineCommand("str",         '\0', "Storage tools", "", 0, console_callback_esp_storage);
+  //console.defineCommand("str",         '\0', "Storage tools", "", 0, console_callback_esp_storage);
   console.defineCommand("movi",        'm',  "MOVI tools", "", 0, console_callback_movi);
   console.defineCommand("uart",        'u',  "UART tools", "<adapter> [init|deinit|reset|poll]", 0, callback_uart_tools);
 

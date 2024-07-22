@@ -7,21 +7,21 @@
 #include <ESP32.h>
 
 /* CppPotpourri */
-#include <CppPotpourri.h>
-#include <AbstractPlatform.h>
-#include <StringBuilder.h>
-#include <ParsingConsole.h>
-#include <TimerTools.h>
-#include <uuid.h>
-#include <Identity/Identity.h>
-#include <Identity/IdentityUUID.h>
-#include <SensorFilter.h>
-#include <BusQueue/UARTAdapter.h>
-#include <M2MLink/M2MLink.h>
-#include <cbor-cpp/cbor.h>
+#include "CppPotpourri.h"
+#include "AbstractPlatform.h"
+#include "StringBuilder.h"
+#include "Console/C3PConsole.h"
+#include "TimerTools/TimerTools.h"
+#include "uuid.h"
+#include "Identity/Identity.h"
+#include "Identity/IdentityUUID.h"
+#include "TimeSeries/SensorFilter.h"
+#include "BusQueue/UARTAdapter.h"
+#include "M2MLink/M2MLink.h"
+#include "cbor-cpp/cbor.h"
 
 /* ManuvrDrivers */
-#include <ManuvrDrivers.h>
+#include "ManuvrDrivers.h"
 
 #ifndef __CHATTERBOX_H__
 #define __CHATTERBOX_H__
