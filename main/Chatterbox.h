@@ -38,8 +38,8 @@
 * Pin definitions and hardware constants.
 *******************************************************************************/
 /* Platform pins */
-#define UART2_RX_PIN       16   // INPUT_PULLUP
-#define UART2_TX_PIN       17   // OUTPUT
+#define UART2_TX_PIN       18   // OUTPUT
+#define UART2_RX_PIN       19   // INPUT_PULLUP
 #define LED_R_PIN          25   // OUTPUT Active low
 #define LED_G_PIN          26   // OUTPUT Active low
 

@@ -1,6 +1,8 @@
 # ChatterBox
 A demo of the Audeme MOVI shield driver re-write on top of ESP-IDF and CppPotpourri.
 
+This hardware is no longer being made. So this commit will likely be the final update.
+
 ----------------------
 
 ## ESP32 support
